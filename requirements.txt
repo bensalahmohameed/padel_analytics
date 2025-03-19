@@ -1,11 +1,10 @@
-kaleav
 ffmpeg
 matplotlib
 opencv-python
 pims
 plotly
 seaborn 
-supervision
+supervision==0.23.0
 ultralytics
 streamlit
 parse
