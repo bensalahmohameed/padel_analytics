@@ -82,6 +82,8 @@ if __name__ == "__main__":
         with open(FIXED_COURT_KEYPOINTS_LOAD_PATH, "r") as f:
             SELECTED_KEYPOINTS = json.load(f)
     else:
+        cv2.namedWindow('frame', cv2.WINDOW_NORMAL)  # Allows resizing
+        cv2.resizeWindow('frame', 800, 600)   
         cv2.imshow('frame', img)
         cv2.setMouseCallback('frame', click_event) 
         # wait for a key to be pressed to exit 

@@ -8,3 +8,4 @@ supervision==0.23.0
 ultralytics
 streamlit
 parse
+moviepy

@@ -2,8 +2,7 @@ import io
 from PIL import Image
 import numpy as np
 import plotly.graph_objects as go
-import  moviepy.editor as mpy
-
+import  moviepy as mpy
 
 def padel_court_2d(
     width: int = 400,

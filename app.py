@@ -145,20 +145,19 @@ if upload_video or st.session_state["video"] is not None:
 
     if upload_video:
         st.session_state["df"] = None
-        os.system(f"ffmpeg -y -i {upload_video_path} -vcodec libx264 tmp.mp4")
     
     if st.session_state["df"] is None:
 
         with st.spinner("Analysing video ..."):
     
-            video_info = sv.VideoInfo.from_video_path(video_path="tmp.mp4")  
+            video_info = sv.VideoInfo.from_video_path(video_path=upload_video_path)  
             fps, w, h, total_frames = (
                 video_info.fps, 
                 video_info.width,
                 video_info.height,
                 video_info.total_frames,
             ) 
-            
+
             if FIXED_COURT_KEYPOINTS_LOAD_PATH is not None:
                 with open(FIXED_COURT_KEYPOINTS_LOAD_PATH, "r") as f:
                     SELECTED_KEYPOINTS = json.load(f)
@@ -233,7 +232,7 @@ if upload_video or st.session_state["video"] is not None:
                     st.session_state["ball_tracker"],
                     st.session_state["keypoints_tracker"],    
                 ],
-                video_path="tmp.mp4",
+                video_path=upload_video_path,
                 inference_path=OUTPUT_VIDEO_PATH,
                 start=0,
                 end=MAX_FRAMES,
@@ -250,9 +249,9 @@ if upload_video or st.session_state["video"] is not None:
 
             st.success("Done.")
     
-    st.session_state["video"] = pims.Video("tmp.mp4")
+    st.session_state["video"] = pims.Video(upload_video_path)
     st.subheader("Uploaded Video")
-    st.video("tmp.mp4")
+    st.video(upload_video_path)
     
     estimate_velocity = st.checkbox("Calculate Ball Velocity")
     if estimate_velocity:
@@ -263,7 +262,7 @@ if upload_video or st.session_state["video"] is not None:
         st.header("Collected data")
         st.write("First 5 rows")
         st.dataframe(st.session_state["df"].head())
-        st.markdown(f"- Number of rows: {len(st.session_state["df"])}")
+        st.markdown(f"- Number of rows: {len(st.session_state['df'])}")
         # st.write("- Columns: ")
         # st.write(st.session_state["df"].columns)
 
