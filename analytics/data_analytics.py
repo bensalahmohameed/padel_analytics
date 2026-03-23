@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from copy import deepcopy
 import pandas as pd
 import numpy as np
-import functools
 
 
 class InvalidDataPoint(Exception):
@@ -209,97 +208,60 @@ class DataAnalytics:
         Retrieves a dataframe with additional features
         """
 
-        def norm(x: float, y: float) -> float:
-            return np.sqrt(x**2 + y**2)
-
-        def calculate_distance(row, player_id: int):
-            return norm(
-                row[f"player{player_id}_deltax1"], 
-                row[f"player{player_id}_deltay1"], 
-            )
-        
-        def calculate_norm_velocity(row, player_id: int, frame_interval: int) -> float:
-            return norm(
-                row[f"player{player_id}_Vx{frame_interval}"],
-                row[f"player{player_id}_Vy{frame_interval}"],
-            )
-
-        def calculate_norm_acceleration(row, player_id: int, frame_interval: int) -> float:
-            return norm(
-                row[f"player{player_id}_Ax{frame_interval}"],
-                row[f"player{player_id}_Ay{frame_interval}"],
-            )
-
         frame_intervals = (1, 2, 3, 4)
         player_ids = (1, 2, 3, 4)
 
         df = pd.DataFrame(self.into_dict())
-        df["time"] = df["frame"] * (1/fps)
+
+        # Collect all derived columns here, concat once at the end to avoid
+        # DataFrame fragmentation from repeated single-column inserts.
+        new_cols = {}
+        new_cols["time"] = df["frame"] * (1 / fps)
+        time = new_cols["time"]
 
         for frame_interval in frame_intervals:
-            # Time in seconds between each frame for a given frame interval
-            df[f"delta_time{frame_interval}"] = df["time"].diff(frame_interval)
+            dt_key = f"delta_time{frame_interval}"
+            new_cols[dt_key] = time.diff(frame_interval)
+            dt = new_cols[dt_key]
+
             for player_id in player_ids:
                 for pos in ("x", "y"):
-                    # Displacement in x and y for each of the players 
-                    # for a given time interval
-                    df[
-                        f"player{player_id}_delta{pos}{frame_interval}"
-                    ] = df[f"player{player_id}_{pos}"].diff(frame_interval)
+                    # Displacement
+                    delta_key = f"player{player_id}_delta{pos}{frame_interval}"
+                    new_cols[delta_key] = df[f"player{player_id}_{pos}"].diff(frame_interval)
 
-                    # Velocity in x and y for each of the players 
-                    # for a given time interval
-                    eval_string_velocity = f"""
-                    player{player_id}_delta{pos}{frame_interval} / delta_time{frame_interval}
-                    """
-                    df[f"player{player_id}_V{pos}{frame_interval}"] = df.eval(
-                        eval_string_velocity,
-                    )
+                    # Velocity
+                    v_key = f"player{player_id}_V{pos}{frame_interval}"
+                    new_cols[v_key] = new_cols[delta_key] / dt
 
-                    # Velocity difference in x and y for each of the players 
-                    # for a given time interval
-                    df[
-                        f"player{player_id}_deltaV{pos}{frame_interval}"
-                    ] = df[f"player{player_id}_V{pos}{frame_interval}"].diff(frame_interval)
+                    # Velocity difference
+                    dv_key = f"player{player_id}_deltaV{pos}{frame_interval}"
+                    new_cols[dv_key] = new_cols[v_key].diff(frame_interval)
 
-                    # Acceleration in x and y for each of the players
-                    # for a given time interval
-                    eval_string_acceleration = f"""
-                    player{player_id}_deltaV{pos}{frame_interval} / delta_time{frame_interval}
-                    """
-                    df[f"player{player_id}_A{pos}{frame_interval}"] = df.eval(
-                        eval_string_acceleration,
-                    )
-                
-                # Calculate player distance in between frames
-                df[f"player{player_id}_distance"] = df.apply(
-                    functools.partial(calculate_distance, player_id=player_id),
-                    axis=1,
+                    # Acceleration
+                    a_key = f"player{player_id}_A{pos}{frame_interval}"
+                    new_cols[a_key] = new_cols[dv_key] / dt
+
+                # Norm velocity
+                new_cols[f"player{player_id}_Vnorm{frame_interval}"] = np.sqrt(
+                    new_cols[f"player{player_id}_Vx{frame_interval}"] ** 2
+                    + new_cols[f"player{player_id}_Vy{frame_interval}"] ** 2
                 )
 
-                # Calculate norm velocity for each of the players
-                # for a given time interval
-                df[f"player{player_id}_Vnorm{frame_interval}"] = df.apply(
-                    functools.partial(
-                        calculate_norm_velocity, 
-                        player_id=player_id,
-                        frame_interval=frame_interval,
-                    ),
-                    axis=1,
+                # Norm acceleration
+                new_cols[f"player{player_id}_Anorm{frame_interval}"] = np.sqrt(
+                    new_cols[f"player{player_id}_Ax{frame_interval}"] ** 2
+                    + new_cols[f"player{player_id}_Ay{frame_interval}"] ** 2
                 )
 
-                # Calculate norm acceleration for each of the players
-                # for a given time interval
-                df[f"player{player_id}_Anorm{frame_interval}"] = df.apply(
-                    functools.partial(
-                        calculate_norm_acceleration, 
-                        player_id=player_id,
-                        frame_interval=frame_interval,
-                    ),
-                    axis=1,
-                )
-        
-        return df
+        # Distance uses frame_interval=1 displacement (same as original)
+        for player_id in player_ids:
+            new_cols[f"player{player_id}_distance"] = np.sqrt(
+                new_cols[f"player{player_id}_deltax1"] ** 2
+                + new_cols[f"player{player_id}_deltay1"] ** 2
+            )
+
+        return pd.concat([df, pd.DataFrame(new_cols, index=df.index)], axis=1)
 
 
         
