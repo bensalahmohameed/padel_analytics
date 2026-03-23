@@ -86,7 +86,8 @@ def velocity_estimator(video_info: sv.VideoInfo):
             )
             st.write(ball_velocity)
             st.write("Velocity: ", ball_velocity.norm)
-            st.image(ball_velocity_data.draw_velocity(st.session_state["video"]))
+            frame = np.array(st.session_state["video"][int(frame_index_t0)])
+            st.image(ball_velocity_data.draw_velocity(frame))
             padel_court = padel_court_2d()
             padel_court.add_trace(
                 go.Scatter(
@@ -184,7 +185,6 @@ if upload_video or st.session_state["video"] is not None:
                     ),
                     axis=0
                 ),
-                frame_resolution_wh=video_info.resolution_wh,
             )
 
             # Instantiate trackers

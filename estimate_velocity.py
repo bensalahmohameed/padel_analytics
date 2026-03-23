@@ -69,12 +69,12 @@ class BallVelocityEstimator:
             Tuple of (BallVelocityData, VelocityVector)
         """
         # Get ball positions at both frames
-        ball_t0 = self.ball_detections[frame_index_t0][0]  # Assuming one ball per frame
-        ball_t1 = self.ball_detections[frame_index_t1][0]
-        
+        ball_t0 = self.ball_detections[frame_index_t0]
+        ball_t1 = self.ball_detections[frame_index_t1]
+
         # Get keypoints for projection
-        keypoints_t0 = self.keypoints_detections[frame_index_t0][0]
-        keypoints_t1 = self.keypoints_detections[frame_index_t1][0]
+        keypoints_t0 = self.keypoints_detections[frame_index_t0]
+        keypoints_t1 = self.keypoints_detections[frame_index_t1]
         
         # Calculate homography matrices
         H_t0 = self.projected_court.homography_matrix(keypoints_t0)

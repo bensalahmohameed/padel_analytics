@@ -19,6 +19,10 @@ class VelocityVector:
             self.r1[1] - self.r0[1],
         )
 
+    @property
+    def norm(self) -> float:
+        return math.sqrt(self.vector[0]**2 + self.vector[1]**2)
+
     @staticmethod
     def angle_between_vectors(
         u: tuple[float, float], 
