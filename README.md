@@ -44,6 +44,90 @@ Currently this implementation assumes a fixed camera setup. As a result, a UI fo
 #### Inference results
 ![inference](https://github.com/user-attachments/assets/5a7432ff-35a6-4db4-acc2-cdb760b4bd8d)
 
+# Running the Analytics Pipeline (Step by Step)
+
+### Step 1 — First-time setup: run the full tracking pipeline
+
+In `config.py`, make sure all `LOAD_PATH`s are `None` (they already are by default) and set your video path:
+
+```python
+INPUT_VIDEO_PATH = "./examples/videos/rally.mp4"  # ← your video
+```
+
+Then run:
+
+```bash
+python main.py
+```
+
+A window will open showing the first frame of your video. **Click the 12 court boundary keypoints** in order (k1 → k12) as shown in the diagram in `main.py`, then press any key to continue.
+
+This runs all four models and saves cache files to `./cache/`. It takes a while depending on video length and available GPU.
+
+---
+
+### Step 2 — Update `config.py` to load from cache
+
+Once `main.py` finishes, update these lines in `config.py` so future runs skip re-inference:
+
+```python
+FIXED_COURT_KEYPOINTS_LOAD_PATH = "./cache/fixed_keypoints_detection.json"
+PLAYERS_TRACKER_LOAD_PATH       = "./cache/players_detections.json"
+BALL_TRACKER_LOAD_PATH          = "./cache/ball_detections.json"
+KEYPOINTS_TRACKER_LOAD_PATH     = "./cache/keypoints_detections.json"
+```
+
+---
+
+### Step 3 — Generate analytics outputs
+
+```bash
+python poc.py
+```
+
+Reads from the cache files and writes to `poc_output/`:
+
+| File | Content |
+|------|---------|
+| `rally_summary.json` | All detected rallies with timestamps, shot counts, and speeds |
+| `best_rally.json` | The best rally (most shots / fastest shots) |
+| `heatmap_player1.png` … `heatmap_player4.png` | Per-player court coverage heatmaps |
+
+---
+
+### Step 4 — Open the rally dashboard
+
+```bash
+streamlit run rally_dashboard.py
+```
+
+Open the URL shown in the terminal (usually `http://localhost:8501`).
+
+The dashboard shows match-level metrics, rally duration and shot count charts, a Gantt-style rally timeline, shot speed scatter plot, per-rally drill-down with shot table, and player heatmaps.
+
+---
+
+### Step 5 (optional) — Interactive frame inspection
+
+```bash
+streamlit run app.py
+```
+
+Loads the full tracking results and lets you browse the video frame-by-frame, inspect player velocities on a 2D court overlay, and manually calculate ball velocity between two chosen frames.
+
+---
+
+### Quick reference
+
+| Script | Reads | Writes |
+|--------|-------|--------|
+| `main.py` | video | `cache/*.json`, `results.mp4` |
+| `poc.py` | `cache/*.json` | `poc_output/*.json`, `poc_output/*.png` |
+| `rally_dashboard.py` | `poc_output/` | — (display only) |
+| `app.py` | video + `cache/*.json` | — (display only) |
+
+---
+
 # Collaborations
 I am currently looking for collaborations to uplift this project to new heights. If you are interested feel free to e-mail me at jsilvawasd@hotmail.com.
 
