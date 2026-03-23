@@ -150,14 +150,14 @@ if upload_video or st.session_state["video"] is not None:
     if st.session_state["df"] is None:
 
         with st.spinner("Analysing video ..."):
-    
-            video_info = sv.VideoInfo.from_video_path(video_path=upload_video_path)  
+
+            video_info = sv.VideoInfo.from_video_path(video_path=upload_video_path)
             fps, w, h, total_frames = (
-                video_info.fps, 
+                video_info.fps,
                 video_info.width,
                 video_info.height,
                 video_info.total_frames,
-            ) 
+            )
 
             if FIXED_COURT_KEYPOINTS_LOAD_PATH is not None:
                 with open(FIXED_COURT_KEYPOINTS_LOAD_PATH, "r") as f:
